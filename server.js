@@ -17,16 +17,13 @@ const app = express();
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:3002'], credentials: true })); //  conexões externas ou seja o site 
+
 app.use("/api/users", require("./routes/userRoutes")); 
 app.use("/auth", require("./routes/userRoutes")); 
 app.use("/auth", require("./routes/userRoutesAdm"));
 app.use("/api/adm", require("./routes/userRoutesAdm"));
 
 app.use("/uploads", express.static("uploads"));
-
-
-
-
 
 const server = http.createServer(app);
 
@@ -45,19 +42,14 @@ const port = new SerialPort({
   baudRate: 9600,
 });
 
-
-
-
 const parser = port.pipe(new ReadlineParser({ delimiter: '\n' }));
 
 let corrente1Data = 0;
 let corrente2Data = 0;
-
-  let misturadorData=0;
-    let escotilhaData=0;
-    let prensaData = 0;
-    let esteiraData=0;
-
+let misturadorData=0;
+let escotilhaData=0;
+let prensaData = 0;
+let esteiraData=0;
 
 parser.on('data', (data) => {
   console.log('Dados recebidos do Arduino:', data.trim());
