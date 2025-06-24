@@ -8,6 +8,9 @@ const { SerialPort } = require('serialport');
 const { ReadlineParser } = require('@serialport/parser-readline'); 
 const connectDb= require("./database/connection");
 const bodyParser = require("body-parser");
+const path = require('path');
+
+
 
 const Alerta = require('./models/Alerta');
 
@@ -39,7 +42,7 @@ const io = new Server(server, {
 });
 
 
-const portName = 'COM4'; 
+const portName = 'COM9'; 
 const port = new SerialPort({
   path: portName,
   baudRate: 9600,
@@ -81,8 +84,6 @@ parser.on('data', (data) => {
         horario: new Date(),
       });
      
-
-
       novoAlerta.save()
       .then(() => {
         console.log('Alerta salvo no MongoDB com sucesso!');
@@ -102,9 +103,7 @@ parser.on('data', (data) => {
         mensagem: 'Curto de corrente:corrente acima do nivel se seguranca',
         horario: new Date(),
       });
-     
-
-
+    
       novoAlerta.save()
       .then(() => {
         console.log('Alerta salvo no MongoDB com sucesso!');

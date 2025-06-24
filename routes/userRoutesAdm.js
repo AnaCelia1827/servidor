@@ -289,7 +289,7 @@ router.get('/azulejos', async (req, res) => {
   }
 });
 
-router.get("/historico", async (req, res) => {
+/*router.get("/historico", async (req, res) => {
   try {
     const { inicio, fim } = req.query;
 
@@ -325,11 +325,11 @@ router.get("/historico", async (req, res) => {
 
 
 
-router.get("/alertas", async (req, res) => {
+
+router.get("/historico", async (req, res) => {
   try {
     const { inicio, fim } = req.query;
 
-    // Verifica se ambas as datas foram fornecidas
     if (!inicio || !fim) {
       return res.status(400).json({ message: "Datas de início e fim são obrigatórias." });
     }
@@ -337,25 +337,118 @@ router.get("/alertas", async (req, res) => {
     const dataInicio = new Date(inicio);
     const dataFim = new Date(fim);
 
-    // Verifica se as datas são válidas
     if (isNaN(dataInicio) || isNaN(dataFim)) {
       return res.status(400).json({ message: "Datas inválidas fornecidas." });
     }
 
-    // Cria o filtro para o campo `data`
+    // Busca os históricos
+    const historicos = await Historico.find({
+      data: { $gte: dataInicio, $lte: dataFim }
+    }).sort({ data: -1 });
+
+    // Enriquecer histórico com dados do usuário
+    const historicoComUsuario = await Promise.all(historicos.map(async (item) => {
+      const usuario = await User.findOne({ nome: item.usuario }); // ou { email: item.usuario } se for email
+      return {
+        ...item.toObject(),
+        usuarioInfo: usuario ? {
+          nome: usuario.nome,
+          email: usuario.email,
+          fotoPerfil: usuario.fotoPerfil,
+          role: usuario.role
+        } : null
+      };
+    }));
+
+    res.json(historicoComUsuario);
+  } catch (err) {
+    console.error("Erro ao buscar o histórico:", err);
+    res.status(500).json({ message: "Erro ao buscar o histórico" });
+  }
+});
+
+*/
+
+router.get("/alertas", async (req, res) => {
+  try {
+    const { inicio, fim } = req.query;
+
+    if (!inicio || !fim) {
+      return res.status(400).json({ message: "Datas de início e fim são obrigatórias." });
+    }
+
+    const dataInicio = new Date(inicio);
+    const dataFim = new Date(fim);
+
+    if (isNaN(dataInicio) || isNaN(dataFim)) {
+      return res.status(400).json({ message: "Datas inválidas fornecidas." });
+    }
+
     const filtro = {
-      data: {
+      criadoEm: {
         $gte: dataInicio,
-        $lte: dataFim
+        $lte: dataFim,
       }
     };
 
-    // Consulta no banco de dados
-    const alertas = await Alerta.find(filtro)
-    
-      .sort({ criadoEm: -1 }); // Ordena do mais recente para o mais antigo
+    const alertas = await Alerta.find(filtro).sort({ criadoEm: -1 });
 
     res.json(alertas);
+  } catch (err) {
+    console.error("Erro ao buscar os alertas:", err);
+    res.status(500).json({ message: "Erro ao buscar os alertas" });
+  }
+});
+
+
+
+
+// Rota para buscar histórico com usuário
+router.get("/historico", async (req, res) => {
+  try {
+    const { inicio, fim, nome } = req.query;
+
+    if (!inicio || !fim) {
+      return res.status(400).json({ message: "Datas de início e fim são obrigatórias." });
+    }
+
+    const dataInicio = new Date(inicio);
+    const dataFim = new Date(fim);
+
+    if (isNaN(dataInicio) || isNaN(dataFim)) {
+      return res.status(400).json({ message: "Datas inválidas fornecidas." });
+    }
+
+    // Busca os históricos no intervalo de datas e filtro opcional pelo nome do usuário
+    let filtro = {
+      data: { $gte: dataInicio, $lte: dataFim }
+    };
+
+    if (nome) {
+      // Busca por nome contendo texto (case insensitive)
+      filtro.usuario = new RegExp(nome, 'i');
+    }
+
+    const historicos = await Historico.find(filtro).sort({ data: -1 });
+
+    // Enriquecer histórico com dados do usuário
+    const historicoComUsuario = await Promise.all(historicos.map(async (item) => {
+      // Aqui assumimos que item.usuario armazena o _id do usuário
+      const usuario = await User.findOne({ email: item.usuario });
+
+
+      return {
+        ...item.toObject(),
+        usuarioInfo: usuario ? {
+          nome: usuario.nome,
+          email: usuario.email,
+          fotoPerfil: usuario.fotoPerfil, // ex: "/uploads/1746024526524.png"
+          role: usuario.role
+        } : null
+      };
+    }));
+
+    res.json(historicoComUsuario);
 
   } catch (err) {
     console.error("Erro ao buscar o histórico:", err);
