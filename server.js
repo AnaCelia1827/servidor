@@ -42,7 +42,7 @@ const io = new Server(server, {
 });
 
 
-const portName = 'COM9'; 
+const portName = 'COM4'; 
 const port = new SerialPort({
   path: portName,
   baudRate: 9600,
